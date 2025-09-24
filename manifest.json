@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "Downloader Corsi UniTN",
+    "version": "1.0",
+    "permissions": ["downloads", "activeTab", "scripting"],
+    "host_permissions": ["https://didatticaonline.unitn.it/*"],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://didatticaonline.unitn.it/*"],
+            "js": ["lib/axios.min.js", "lib/jszip.min.js", "content.js"]
+        }
+    ]
+}
