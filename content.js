@@ -94,7 +94,7 @@
 
         console.log(listBlobs);
 
-        await createZipBlobs(listBlobs);
+        await createZipBlobs(listBlobs, section);
         // const url = "https://didatticaonline.unitn.it/dol/mod/resource/view.php?id=1363650";
         // fetch(url)
         //     .then((res) => res.blob())
@@ -127,15 +127,28 @@
         //         }
         //     });
     }
-    async function createZipBlobs(listBlobs) {
+    async function createZipBlobs(listBlobs, section) {
         var zip = new JSZip();
         listBlobs.forEach((file) => {
             // PDF case
             if (file.type == "application/pdf") {
                 const nameSplit = file.name.split(" ");
-                const lastName = nameSplit.slice(0, nameSplit.length - 1);
+                const lastName = nameSplit.slice(0, nameSplit.length - 2);
+                // Build filename
                 console.log(lastName);
-                const fileName = lastName.toString() + ".pdf";
+
+                let progressiveName = "";
+                for (let i = 0; i < lastName.length; i++) {
+                    //Append next word from split
+                    progressiveName += nameSplit[i];
+                    // Prevent adding last space
+                    if (!(i == lastName.length - 1)) {
+                        progressiveName += " ";
+                    }
+                }
+                const fileName = progressiveName + ".pdf";
+                console.log("HERE");
+                console.log(fileName);
                 zip.file(fileName, file);
             }
         });
@@ -144,7 +157,7 @@
 
         const link = document.createElement("a");
         link.href = URL.createObjectURL(content);
-        link.download = "materials.zip";
+        link.download = section + ".zip";
         document.body.appendChild(link);
         link.click();
         link.remove();
