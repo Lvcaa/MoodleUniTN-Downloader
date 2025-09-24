@@ -1,0 +1,104 @@
+html * {
+  font-family: "Inter", sans-serif;
+}
+body {
+  width: 400px;
+  padding: 10px;
+  background: #f4f4f4;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+  font-size: 16px;
+  margin: 0 0 10px;
+  color: #333;
+}
+
+#logounitn {
+  width: 70px;
+  height: 70px;
+}
+
+#header {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+#course {
+  color: #222;
+  margin: 10px 0;
+  font-weight: bolder !important ;
+  font-size: 24px;
+}
+
+#containerInfo {
+  margin-left: 15px;
+}
+
+#sectionsDownload {
+  max-height: 200px;
+  width: 90%; /* wider so the text fits */
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+#sectionsDownload ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+#topicsList {
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+}
+
+/* --- Base button style --- */
+#topicsList button {
+  border: none;
+  padding: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  width: 100%;
+  border-radius: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: #f9f9f9; /* light grey background */
+  color: #333; /* dark text */
+  border: 1px solid #ddd; /* soft border */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+/* --- Hover state --- */
+#topicsList button:hover {
+  background: #f1f1f1;
+  box-shadow: 0 0px 10px #0996d7, 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Pressed state (mouse down) --- */
+#topicsList button:active {
+  background-color: #0996d7;
+  color: #fff;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Active state (toggled via JS) --- */
+#topicsList button.button-active {
+  background-color: #0996d7;
+  color: #fff;
+  box-shadow: 0 0px 10px #0996d7, 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Optional inactive override --- */
+#topicsList button.button-not-active {
+  background-color: #fff;
+  color: #333;
+}
