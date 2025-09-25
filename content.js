@@ -31,6 +31,10 @@
         });
         console.groupEnd();
     }
+    async function parseFolder(wrapper) {
+        console.log("I WAS CALLED");
+        let href = wrapper.querySelector(".activityname > a");
+    }
 
     async function listMaterial(section) {
         let listHrefsMaterials = [];
@@ -50,11 +54,20 @@
         console.log(materialWrapper);
         console.log("Li list: ", materialList);
 
-        materialList.forEach((link) => {
+        materialList.forEach((wrapper) => {
             console.log(link.querySelector(".activityname > a"));
-            listHrefsMaterials.push(link.querySelector(".activityname > a"));
+            listHrefsMaterials.push(wrapper.querySelector(".activityname > a"));
         });
         console.log(listHrefsMaterials);
+
+        //Check if there is any subfolder inside the selected section
+        materialList.forEach((wrapper) => {
+            if (wrapper.querySelector('[class^="activity"] img')) {
+                console.log("FOLDER FOUND...");
+                parseFolder(wrapper);
+            }
+        });
+
         return listHrefsMaterials;
     }
 
