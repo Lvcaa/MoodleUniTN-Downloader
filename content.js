@@ -40,11 +40,11 @@
         //Search for all materials in "section-*"
         let liSection = document.getElementById(idSection);
 
-        // let divLiSection = liSection.querySelector('[id*="coursecontentcollapse"]');
-        // let divLiSection = liSection.querySelector('[class$="d-block"]');
-
+        // Container containing list of sections
         let materialWrapper = liSection.querySelector("ul");
-        let materialList = materialWrapper.querySelectorAll("li");
+
+        // Single sections
+        let materialList = materialWrapper.querySelectorAll('li[class^="activity"]');
 
         console.log(liSection);
         console.log(materialWrapper);
