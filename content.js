@@ -12,11 +12,10 @@
         console.info("📌 Course name:", courseName);
         return courseName;
     }
-
+    var zip = new JSZip();
+    let userSelectedTopics = [];
     let allSectionElements = [];
     let collectedFiles = [];
-    let bigFolderSectionList = [];
-    let subSmallFolders = [];
 
     async function getBlobFromA(anchorUrl) {
         let resourceUrl = anchorUrl.href;
@@ -58,6 +57,12 @@
         console.log("BUTTON DOWNLOAD ALL: ", buttonDownloadAll);
     }
 
+    async function addListTopics(sectionName) {
+        let sectionId = dictionaryTopics[sectionName];
+        userSelectedTopics.push(sectionName);
+        console.log("User selected topic: ", sectionId);
+        console.log("Current list: ", userSelectedTopics);
+    }
     async function parseFolderActivity(folderLi) {
         let folderLink = folderLi.querySelector(".activityname > a");
         let folderUrl = folderLink.href;
@@ -75,6 +80,8 @@
     async function listSectionMaterials(sectionName) {
         let materialLinks = [];
         let sectionId = dictionaryTopics[sectionName];
+        console.log("Looking for section: ", sectionName);
+
         console.log("Clicked dictionary: ", sectionId);
 
         //Search for all materials in "section-*"
@@ -111,31 +118,52 @@
 
         return materialLinks;
     }
+    async function finalDownload() {
+        const zipBlob = await zip.generateAsync({ type: "blob" });
 
-    async function downloadSectionPdfs(sectionName) {
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(zipBlob);
+        downloadLink.download = getCourseName() + ".zip";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        console.info("Zip file created and downloaded! ");
+    }
+    async function downloadSectionPdfs() {
+        console.log("I WAS CALLED");
         collectedFiles = [];
-        console.log(sectionName);
-        let materialLinks = await listSectionMaterials(sectionName);
-        console.log(materialLinks);
-        for (const materialLink of materialLinks) {
-            const blob = await getBlobFromA(materialLink);
-            // Check if href contains another href
-            if (blob.type === "text/html") {
-                await parseHtmlResource(blob, materialLink);
-            } else {
-                console.warn("⚠️ Skipping download, unexpected file type:", blob.type);
+
+        if (userSelectedTopics.length == 0) {
+            alert("⚠️ Nessuna sezione selezionata. Seleziona almeno una sezione.");
+            return;
+        } else {
+            if (userSelectedTopics.length > 0) {
+                console.log("Comincio download...");
+                console.log(dictionaryTopics);
+                //Loop over sections selected by user
+                for (const sectionName of userSelectedTopics) {
+                    let materialLinks = await listSectionMaterials(sectionName);
+                    console.log(materialLinks);
+                    for (const materialLink of materialLinks) {
+                        const blob = await getBlobFromA(materialLink);
+                        // Check if href contains another href
+                        if (blob.type === "text/html") {
+                            await parseHtmlResource(blob, materialLink);
+                        } else {
+                            console.warn("⚠️ Skipping download, unexpected file type:", blob.type);
+                        }
+                    }
+
+                    console.log(collectedFiles);
+
+                    await createZipBlobs(collectedFiles, sectionName);
+                }
+                finalDownload();
             }
         }
-
-        console.log(collectedFiles);
-
-        await createZipBlobs(collectedFiles, sectionName);
     }
 
     async function createZipBlobs(filesToZip, sectionName) {
-        //TODO: Check if any subfolder was created
-
-        var zip = new JSZip();
         filesToZip.forEach((pdfFile) => {
             // PDF case
             if (pdfFile.type == "application/pdf") {
@@ -153,19 +181,9 @@
                 }
                 const fileName = baseFileName + ".pdf";
                 console.log(fileName);
-                zip.file(fileName, pdfFile);
+                zip.folder(sectionName).file(fileName, pdfFile);
             }
         });
-
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-
-        const downloadLink = document.createElement("a");
-        downloadLink.href = URL.createObjectURL(zipBlob);
-        downloadLink.download = sectionName + ".zip";
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        downloadLink.remove();
-        console.info("Zip file created and downloaded! ");
     }
 
     // --- Extract topics from the page ---
@@ -203,4 +221,5 @@
     window.getCourseName = getCourseName;
     window.getTopics = getTopics;
     window.downloadPDF = downloadSectionPdfs;
+    window.addListTopics = addListTopics;
 })();
