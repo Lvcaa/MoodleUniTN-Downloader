@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         chrome.scripting.executeScript({
                             target: { tabId: tab.id },
-                            func: (t) => window.downloadPDF(t),
+                            func: (t) => window.addListTopics(t),
                             args: [topic],
                         });
                     };
@@ -52,6 +52,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                     divButtons.appendChild(button);
                 }
             }
+            let buttonDownloadAll = document.createElement("button");
+            buttonDownloadAll.textContent = "Scarica le sezioni selezionate";
+            buttonDownloadAll.id = "button-download";
+            //Scarica tutte le sezioni selezionate
+            buttonDownloadAll.onclick = () => {
+                chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: () => window.downloadPDF(),
+                });
+            };
+            divButtons.appendChild(buttonDownloadAll);
         }
     );
 });
