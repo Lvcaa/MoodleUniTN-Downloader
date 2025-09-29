@@ -8,238 +8,199 @@
         if (!header) return "⚠️ Course name not found";
 
         const h2 = header.querySelector(".h2");
-        const name = h2 ? h2.innerText.trim() : header.innerText.trim();
-        console.info("📌 Course name:", name);
-        return name;
+        const courseName = h2 ? h2.innerText.trim() : header.innerText.trim();
+        console.info("📌 Course name:", courseName);
+        return courseName;
     }
 
-    let sectionTopics = [];
+    let allSectionElements = [];
+    let collectedFiles = [];
+    let bigFolderSectionList = [];
+    let subSmallFolders = [];
+
+    async function getBlobFromA(anchorUrl) {
+        let resourceUrl = anchorUrl.href;
+        const res = await fetch(resourceUrl);
+        const blob = await res.blob();
+        return blob;
+    }
 
     // --- Utility: Parse and format text content ---
-    function parseTextContent(content) {
-        if (!content) {
-            console.error("❌ No text content provided to parser:", content);
-            return;
+    async function parseHtmlResource(blobContent, sourceElement) {
+        const htmlString = await blobContent.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, "text/html");
+
+        // console.log("HERE's the document: ", doc);
+
+        const resourceAnchor = doc.querySelector(".resourceworkaround > a");
+        console.info("🔗 Extracted PDF link:", resourceAnchor);
+
+        if (resourceAnchor) {
+            const nestedBlob = await getBlobFromA(resourceAnchor);
+            const nestedFile = new File([nestedBlob], sourceElement.textContent.trim() || "document.pdf", { type: nestedBlob.type });
+            collectedFiles.push(nestedFile);
+        } else {
+            console.warn("⚠️ No resource link found in .resourceworkaround");
         }
-
-        const divText = content.querySelector(".no-overflow");
-        const divTextElements = divText?.querySelectorAll("p") || [];
-
-        console.group("📝 Parsed Text Content");
-        divTextElements.forEach((p, i) => {
-            console.log(`Paragraph ${i + 1}:`, p.innerText.trim());
-        });
-        console.groupEnd();
-    }
-    async function parseFolder(wrapper) {
-        console.log("I WAS CALLED");
-        let href = wrapper.querySelector(".activityname > a");
     }
 
-    async function listMaterial(section) {
-        let listHrefsMaterials = [];
-        let idSection = dictionaryTopics[section];
-        console.log("Clicked dictionary: ", idSection);
+    async function parseHtmlResourceFolder(blobContent) {
+        const htmlString = await blobContent.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, "text/html");
+        console.log("FOUND DOCUMENT: ", doc);
+
+        //Search for download all button
+        let buttonDownloadAll = doc.querySelector('[id^="single_button"].btn.btn-secondary');
+        console.log("BUTTON DOWNLOAD ALL: ", buttonDownloadAll);
+    }
+
+    async function parseFolderActivity(folderLi) {
+        let folderLink = folderLi.querySelector(".activityname > a");
+        let folderUrl = folderLink.href;
+        const res = await fetch(folderUrl);
+        const folderBlob = await res.blob();
+
+        // Check if href contains another href
+        if (folderBlob.type === "text/html") {
+            await parseHtmlResourceFolder(folderBlob, folderLi);
+        } else {
+            console.warn("⚠️ Skipping download, unexpected file type:", folderBlob.type);
+        }
+    }
+
+    async function listSectionMaterials(sectionName) {
+        let materialLinks = [];
+        let sectionId = dictionaryTopics[sectionName];
+        console.log("Clicked dictionary: ", sectionId);
 
         //Search for all materials in "section-*"
-        let liSection = document.getElementById(idSection);
+        let sectionElement = document.getElementById(sectionId);
 
         // Container containing list of sections
-        let materialWrapper = liSection.querySelector("ul");
+        let materialListContainer = sectionElement.querySelector("ul");
 
         // Single sections
-        let materialList = materialWrapper.querySelectorAll('li[class^="activity"]');
+        let materialItems = materialListContainer.querySelectorAll('li[class^="activity"]');
 
-        console.log(liSection);
-        console.log(materialWrapper);
-        console.log("Li list: ", materialList);
+        console.log(sectionElement);
+        console.log(materialListContainer);
+        console.log("Li list: ", materialItems);
 
-        materialList.forEach((wrapper) => {
-            console.log(link.querySelector(".activityname > a"));
-            listHrefsMaterials.push(wrapper.querySelector(".activityname > a"));
-        });
-        console.log(listHrefsMaterials);
-
-        //Check if there is any subfolder inside the selected section
-        materialList.forEach((wrapper) => {
-            if (wrapper.querySelector('[class^="activity"] img')) {
-                console.log("FOLDER FOUND...");
-                parseFolder(wrapper);
+        materialItems.forEach((materialLi) => {
+            const anchor = materialLi.querySelector(".activityname > a");
+            console.log(anchor);
+            if (anchor) {
+                materialLinks.push(anchor);
+            } else {
+                console.warn("No .activityname > a inside", materialLi);
             }
         });
+        console.log(materialLinks);
 
-        return listHrefsMaterials;
-    }
-
-    async function downloadPDF(section) {
-        console.log(section);
-        let list = await listMaterial(section);
-        let listBlobs = [];
-        console.log(list);
-        for (const element of list) {
-            url = element.href;
-            const res = await fetch(url);
-            const blob = await res.blob();
-            const file = new File([blob], "document", { type: blob.type });
-
-            // Check if href contains another href
-            if (file.type === "text/html") {
-                const htmlString = await blob.text();
-
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlString, "text/html");
-
-                const ahref = doc.querySelector(".resourceworkaround > a")?.href;
-                console.info("🔗 Extracted PDF link:", ahref);
-
-                if (ahref) {
-                    const res2 = await fetch(ahref);
-                    const blob2 = await res2.blob();
-                    const realFile = new File([blob2], element.textContent.trim() || file.pdf, { type: blob2.type });
-                    listBlobs.push(realFile);
-                } else {
-                    console.warn("⚠️ No resource link found in .resourceworkaround");
-                }
-            } else {
-                console.warn("⚠️ Skipping download, unexpected file type:", file.type);
+        //Check if there is any subfolder inside the selected section
+        for (const materialLi of materialItems) {
+            if (materialLi.querySelector('img[alt="Folder icon"]')) {
+                console.log("FOLDER FOUND...");
+                await parseFolderActivity(materialLi);
             }
         }
 
-        console.log(listBlobs);
-
-        await createZipBlobs(listBlobs, section);
-        // const url = "https://didatticaonline.unitn.it/dol/mod/resource/view.php?id=1363650";
-        // fetch(url)
-        //     .then((res) => res.blob())
-        //     .then((blob) => {
-        //         const file = new File([blob], "document", { type: blob.type });
-        //         console.info("📂 Download attempt - file type:", file.type);
-
-        //         // Check if href contains another href
-        //         if (file.type === "text/html") {
-        //             file.text().then((htmlString) => {
-        //                 const parser = new DOMParser();
-        //                 const doc = parser.parseFromString(htmlString, "text/html");
-
-        //                 const ahref = doc.querySelector(".resourceworkaround > a")?.href;
-        //                 console.info("🔗 Extracted PDF link:", ahref);
-
-        //                 if (ahref) {
-        //                     const downloadLink = document.createElement("a");
-        //                     downloadLink.href = ahref;
-        //                     downloadLink.download = "Prova.pdf";
-        //                     document.body.appendChild(downloadLink);
-        //                     downloadLink.click();
-        //                     console.info("✅ Triggered download for Prova.pdf");
-        //                 } else {
-        //                     console.warn("⚠️ No resource link found in .resourceworkaround");
-        //                 }
-        //             });
-        //         } else {
-        //             console.warn("⚠️ Skipping download, unexpected file type:", file.type);
-        //         }
-        //     });
+        return materialLinks;
     }
-    async function createZipBlobs(listBlobs, section) {
-        var zip = new JSZip();
-        listBlobs.forEach((file) => {
-            // PDF case
-            if (file.type == "application/pdf") {
-                const nameSplit = file.name.split(" ");
-                const lastName = nameSplit.slice(0, nameSplit.length - 2);
-                // Build filename
-                console.log(lastName);
 
-                let progressiveName = "";
-                for (let i = 0; i < lastName.length; i++) {
-                    //Append next word from split
-                    progressiveName += nameSplit[i];
-                    // Prevent adding last space
-                    if (!(i == lastName.length - 1)) {
-                        progressiveName += " ";
+    async function downloadSectionPdfs(sectionName) {
+        collectedFiles = [];
+        console.log(sectionName);
+        let materialLinks = await listSectionMaterials(sectionName);
+        console.log(materialLinks);
+        for (const materialLink of materialLinks) {
+            const blob = await getBlobFromA(materialLink);
+            // Check if href contains another href
+            if (blob.type === "text/html") {
+                await parseHtmlResource(blob, materialLink);
+            } else {
+                console.warn("⚠️ Skipping download, unexpected file type:", blob.type);
+            }
+        }
+
+        console.log(collectedFiles);
+
+        await createZipBlobs(collectedFiles, sectionName);
+    }
+
+    async function createZipBlobs(filesToZip, sectionName) {
+        //TODO: Check if any subfolder was created
+
+        var zip = new JSZip();
+        filesToZip.forEach((pdfFile) => {
+            // PDF case
+            if (pdfFile.type == "application/pdf") {
+                const nameParts = pdfFile.name.split(" ");
+                const nameWithoutLastTwoParts = nameParts.slice(0, nameParts.length - 2);
+                // Build filename
+                console.log(nameWithoutLastTwoParts);
+
+                let baseFileName = "";
+                for (let i = 0; i < nameWithoutLastTwoParts.length; i++) {
+                    baseFileName += nameParts[i];
+                    if (!(i == nameWithoutLastTwoParts.length - 1)) {
+                        baseFileName += " ";
                     }
                 }
-                const fileName = progressiveName + ".pdf";
-                console.log("HERE");
+                const fileName = baseFileName + ".pdf";
                 console.log(fileName);
-                zip.file(fileName, file);
+                zip.file(fileName, pdfFile);
             }
         });
 
-        const content = await zip.generateAsync({ type: "blob" });
+        const zipBlob = await zip.generateAsync({ type: "blob" });
 
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(content);
-        link.download = section + ".zip";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(zipBlob);
+        downloadLink.download = sectionName + ".zip";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
         console.info("Zip file created and downloaded! ");
     }
 
     // --- Extract topics from the page ---
     function getTopics() {
-        const topics = document.querySelector(".topics");
-        if (!topics) {
+        const topicsContainer = document.querySelector(".topics");
+        if (!topicsContainer) {
             console.warn("⚠️ No .topics element found on page.");
             return [];
         }
 
-        sectionTopics = topics.querySelectorAll('[id*="section-"]');
-        console.info(`📚 Found ${sectionTopics.length} section(s).`);
+        allSectionElements = topicsContainer.querySelectorAll('[id*="section-"]');
+        console.info(`📚 Found ${allSectionElements.length} section(s).`);
 
-        const result = [];
+        const sectionTitles = [];
 
         console.group("📖 Section Titles");
-        for (let i = 0; i < sectionTopics.length; i++) {
-            const h3 = sectionTopics[i].querySelector("h3");
+        for (let i = 0; i < allSectionElements.length; i++) {
+            const h3 = allSectionElements[i].querySelector("h3");
             if (h3) {
                 const text = h3.innerText.trim();
                 if (text !== "") {
                     console.log(`Section ${i + 1}:`, text);
-                    result.push(text);
-                    dictionaryTopics[text] = sectionTopics[i].id;
+                    sectionTitles.push(text);
+                    dictionaryTopics[text] = allSectionElements[i].id;
                 }
             }
         }
         console.log(dictionaryTopics);
         console.groupEnd();
 
-        // // Example: extract content from the third section (index 2)
-        // const linkElement = sectionTopics[2]?.querySelector('[class*="aalink"]');
-        // if (linkElement && linkElement.href) {
-        //     const hrefToParse = linkElement.href;
-        //     console.info("🔎 Fetching section link:", hrefToParse);
-
-        //     fetch(hrefToParse)
-        //         .then((res) => res.text())
-        //         .then((html) => {
-        //             const parser = new DOMParser();
-        //             const doc = parser.parseFromString(html, "text/html");
-
-        //             const title = doc.querySelector(".h2")?.innerText;
-        //             const content = doc.querySelector(".box.py-3.generalbox.center.clearfix");
-
-        //             console.group("📦 Section Content Page");
-        //             console.log("Title:", title || "❌ Not found");
-        //             console.log("Box content element:", content || "❌ None");
-        //             console.groupEnd();
-
-        //             downloadPDF();
-        //             parseTextContent(content);
-        //         })
-        //         .catch((err) => {
-        //             console.error("❌ Error fetching linked page:", err);
-        //         });
-        // } else {
-        //     console.warn("⚠️ No link element found in third section.");
-        // }
-
-        return result;
+        return sectionTitles;
     }
 
     // --- Export functions to be callable from popup.js ---
     window.getCourseName = getCourseName;
     window.getTopics = getTopics;
-    window.downloadPDF = downloadPDF;
+    window.downloadPDF = downloadSectionPdfs;
 })();
