@@ -1,7 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Downloader Corsi UniTN",
+    "name": "Downloader Moodle Corsi UniTN",
     "version": "1.0",
+    "description": "Estensione per scaricare i materiali dei corsi da didatticaonline.unitn.it per studenti UniTN",
     "permissions": ["downloads", "activeTab", "scripting"],
     "host_permissions": ["https://didatticaonline.unitn.it/*"],
     "action": {
