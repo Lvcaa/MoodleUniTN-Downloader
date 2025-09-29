@@ -45,17 +45,17 @@
         }
     }
 
-    async function parseHtmlResourceFolder(blobContent) {
-        const htmlString = await blobContent.text();
+    // async function parseHtmlResourceFolder(blobContent) {
+    //     const htmlString = await blobContent.text();
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, "text/html");
-        console.log("FOUND DOCUMENT: ", doc);
+    //     const parser = new DOMParser();
+    //     const doc = parser.parseFromString(htmlString, "text/html");
+    //     console.log("FOUND DOCUMENT: ", doc);
 
-        //Search for download all button
-        let buttonDownloadAll = doc.querySelector('[id^="single_button"].btn.btn-secondary');
-        console.log("BUTTON DOWNLOAD ALL: ", buttonDownloadAll);
-    }
+    //     //Search for download all button
+    //     let buttonDownloadAll = doc.querySelector('[id^="single_button"].btn.btn-secondary');
+    //     console.log("BUTTON DOWNLOAD ALL: ", buttonDownloadAll);
+    // }
 
     async function addListTopics(sectionName) {
         let sectionId = dictionaryTopics[sectionName];
@@ -63,19 +63,20 @@
         console.log("User selected topic: ", sectionId);
         console.log("Current list: ", userSelectedTopics);
     }
-    async function parseFolderActivity(folderLi) {
-        let folderLink = folderLi.querySelector(".activityname > a");
-        let folderUrl = folderLink.href;
-        const res = await fetch(folderUrl);
-        const folderBlob = await res.blob();
 
-        // Check if href contains another href
-        if (folderBlob.type === "text/html") {
-            await parseHtmlResourceFolder(folderBlob, folderLi);
-        } else {
-            console.warn("⚠️ Skipping download, unexpected file type:", folderBlob.type);
-        }
-    }
+    // async function parseFolderActivity(folderLi) {
+    //     let folderLink = folderLi.querySelector(".activityname > a");
+    //     let folderUrl = folderLink.href;
+    //     const res = await fetch(folderUrl);
+    //     const folderBlob = await res.blob();
+
+    //     // Check if href contains another href
+    //     if (folderBlob.type === "text/html") {
+    //         await parseHtmlResourceFolder(folderBlob, folderLi);
+    //     } else {
+    //         console.warn("⚠️ Skipping download, unexpected file type:", folderBlob.type);
+    //     }
+    // }
 
     async function listSectionMaterials(sectionName) {
         let materialLinks = [];
@@ -108,13 +109,13 @@
         });
         console.log(materialLinks);
 
-        //Check if there is any subfolder inside the selected section
-        for (const materialLi of materialItems) {
-            if (materialLi.querySelector('img[alt="Folder icon"]')) {
-                console.log("FOLDER FOUND...");
-                await parseFolderActivity(materialLi);
-            }
-        }
+        // //Check if there is any subfolder inside the selected section
+        // for (const materialLi of materialItems) {
+        //     if (materialLi.querySelector('img[alt="Folder icon"]')) {
+        //         console.log("FOLDER FOUND...");
+        //         await parseFolderActivity(materialLi);
+        //     }
+        // }
 
         return materialLinks;
     }
@@ -131,7 +132,8 @@
     }
     async function downloadSectionPdfs() {
         console.log("I WAS CALLED");
-        collectedFiles = [];
+
+        console.log("USER SELECTED TOPICS: ", userSelectedTopics);
 
         if (userSelectedTopics.length == 0) {
             alert("⚠️ Nessuna sezione selezionata. Seleziona almeno una sezione.");
@@ -140,8 +142,11 @@
             if (userSelectedTopics.length > 0) {
                 console.log("Comincio download...");
                 console.log(dictionaryTopics);
+
                 //Loop over sections selected by user
                 for (const sectionName of userSelectedTopics) {
+                    collectedFiles = [];
+
                     let materialLinks = await listSectionMaterials(sectionName);
                     console.log(materialLinks);
                     for (const materialLink of materialLinks) {
@@ -155,7 +160,6 @@
                     }
 
                     console.log(collectedFiles);
-
                     await createZipBlobs(collectedFiles, sectionName);
                 }
                 finalDownload();
