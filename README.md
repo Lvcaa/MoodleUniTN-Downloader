@@ -1,4 +1,4 @@
-# UniTN Courses Downloader <img src="https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg" width="25"/>
+# <img src="https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg" width="50"/> UniTN Courses Downloader 
 
 Welcome! This extension was created to make it easier to **download content** from the **Moodle** platform of the University of Trento. Below you’ll find a practical and intuitive guide to understand how it works.
 
@@ -74,7 +74,7 @@ For any questions, concerns, or clarifications:
 
 ---
 
-# Downloader Corsi UniTN <img src="https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg" width="25"/>
+# <img src="https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg" width="50"/> Downloader Corsi UniTN 
 
 Benvenuto/a! Questa estensione è creata per facilitare il **download dei contenuti** tramite la piattaforma **Moodle** dell'Università di Trento. Qui sotto troverai una guida pratica ed intuitiva per capirne il funzionamento.
 
