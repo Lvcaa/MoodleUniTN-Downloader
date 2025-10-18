@@ -1,6 +1,6 @@
 /*
- * Content Script for Moodle Downloader
- * ------------------------------------
+ * Content Script for Moodle Downloader (Refactored)
+ * -------------------------------------------------
  * This script runs inside a Moodle course page.
  * It extracts the course name and section topics, lets users select sections,
  * fetches downloadable resources (PDFs, folders, etc.), and bundles them into a ZIP file.
@@ -8,13 +8,14 @@
  * Dependencies: JSZip (for zipping), Axios (optional)
  * Exported to: popup.js (browser extension)
  *
- * Version 1.0
+ * Version 1.1
  */
 
 (() => {
     console.info("📥 Content script loaded. Axios available?", typeof axios);
     var dictionaryTopics = {};
 
+    // --- Helpers ---
     function getCourseName() {
         const header = document.querySelector(".page-header-headings");
         if (!header) return "⚠️ Course name not found";
@@ -25,105 +26,164 @@
         return courseName;
     }
 
-    var zip = new JSZip();
+    async function getBlobFromA(anchor) {
+        const res = await fetch(anchor.href, { credentials: "include" });
+        return await res.blob();
+    }
+
+    function getIconType(sourceElement) {
+        const iconImg = sourceElement.closest("li")?.querySelector("img.activityicon");
+        if (!iconImg) return "unknown";
+
+        const alt = iconImg.alt?.toLowerCase() || "";
+        if (alt.includes("file")) return "file";
+        if (alt.includes("folder")) return "folder";
+        if (alt.includes("word")) return "word";
+        if (alt.includes("powerpoint")) return "ppt";
+        if (alt.includes("excel")) return "excel";
+
+        //Written text
+        if (alt.includes("page")) return "page";
+        return "unknown";
+    }
+
+    // --- Global state ---
+    const zip = new JSZip();
     let userSelectedTopics = [];
     let allSectionElements = [];
     let collectedFiles = [];
 
-    async function getBlobFromA(anchorUrl) {
-        let resourceUrl = anchorUrl.href;
-        const res = await fetch(resourceUrl);
-        const blob = await res.blob();
-        return blob;
-    }
-
+    // --- Core logic ---
     async function parseHtmlResource(blobContent, sourceElement) {
         const htmlString = await blobContent.text();
-
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, "text/html");
         const resourceAnchor = doc.querySelector(".resourceworkaround > a");
-        console.info("🔗 Extracted PDF link:", resourceAnchor);
 
-        if (resourceAnchor) {
-            const nestedBlob = await getBlobFromA(resourceAnchor);
-            const nestedFile = new File([nestedBlob], sourceElement.textContent.trim() || "document.pdf", { type: nestedBlob.type });
-            collectedFiles.push(nestedFile);
-        } else {
+        if (!resourceAnchor) {
             console.warn("⚠️ No resource link found in .resourceworkaround");
+            return;
+        }
+
+        // Check icon type before deciding how to fetch
+        const iconType = getIconType(sourceElement);
+        console.info(`🔍 Detected icon type: ${iconType}`);
+
+        switch (iconType) {
+            case "pdf": {
+                const nestedBlob = await getBlobFromA(resourceAnchor);
+                const file = new File([nestedBlob], sourceElement.textContent.trim() || "document.pdf", { type: nestedBlob.type });
+                collectedFiles.push(file);
+                console.info("📄 Added PDF file:", file.name);
+                break;
+            }
+
+            case "word":
+            case "ppt":
+            case "excel":
+            case "file": {
+                const nestedBlob = await getBlobFromA(resourceAnchor);
+                const fileName = sourceElement.textContent.trim() || "document";
+                const extension = iconType === "word" ? ".docx" : iconType === "ppt" ? ".pptx" : iconType === "excel" ? ".xlsx" : ".bin";
+
+                const file = new File([nestedBlob], fileName + extension, { type: nestedBlob.type });
+                collectedFiles.push(file);
+                console.info("📁 Added file:", file.name);
+                break;
+            }
+
+            case "folder": {
+                console.info("📂 Folder icon detected, delegating to parseFolderActivity...");
+                await parseFolderActivity(sourceElement.closest("li"), getSectionNameFromElement(sourceElement));
+                break;
+            }
+
+            default:
+                console.warn("⚠️ Unknown or unsupported resource type:", iconType);
         }
     }
 
-    // --- KEEPING LOGS ONLY INSIDE THIS FUNCTION ---
+    // Helper to extract section name from element context
+    function getSectionNameFromElement(el) {
+        const section = el.closest('[id^="section-"]');
+        const title = section?.querySelector("h3")?.innerText.trim();
+        return title || "Unknown Section";
+    }
+
+    // --- Folder parsing ---
     async function parseHtmlResourceFolder(htmlString, sectionName) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, "text/html");
 
         const tree = doc.querySelector('[class*="foldertree"]');
-        console.log("TREE STRUCTURE: ", tree);
+        if (!tree) {
+            console.warn("⚠️ Folder tree not found in section:", sectionName);
+            return;
+        }
 
         const anchors = tree.querySelectorAll("a");
-        console.log("ALL ANCHORS IN THE TREE: ", anchors);
+        console.log("📂 Found anchors in folder:", anchors);
 
-        //Add folder to zip
         const sectionFolder = zip.folder(sectionName);
+        const folderTitle = doc.querySelector("h1")?.innerText?.trim() || "Untitled Folder";
+        const subFolder = sectionFolder.folder(folderTitle);
 
         for (const anchor of anchors) {
             const blob = await getBlobFromA(anchor);
-            const file = new File([blob], anchor.textContent.trim() || "document.pdf", { type: blob.type });
-            const subFolder = sectionFolder.folder(doc.querySelector("h1").innerHTML); // Nested folder
-            subFolder.file(file.name, file);
+            const fileName = anchor.textContent.trim() || "document";
+            subFolder.file(fileName, blob);
         }
     }
 
     async function addListTopics(sectionName) {
-        let sectionId = dictionaryTopics[sectionName];
+        const sectionId = dictionaryTopics[sectionName];
         userSelectedTopics.push(sectionName);
-        console.log("User selected topic: ", sectionId);
-        console.log("Current list: ", userSelectedTopics);
+        console.log("✅ User selected topic:", sectionId);
     }
 
     async function parseFolderActivity(folderLi, sectionName) {
-        let folderLink = folderLi.querySelector(".activityname a");
-        let folderUrl = folderLink.href;
+        const folderLink = folderLi.querySelector(".activityname a");
+        if (!folderLink) return;
 
-        const res = await fetch(folderUrl, { credentials: "include" });
+        const res = await fetch(folderLink.href, { credentials: "include" });
+        if (!res.ok) return;
+
         const htmlFolder = await res.text();
-
-        if (res) {
-            await parseHtmlResourceFolder(htmlFolder, sectionName);
-        } else {
-            console.warn("⚠️ Skipping download, unexpected file type");
-        }
+        await parseHtmlResourceFolder(htmlFolder, sectionName);
     }
 
     async function listSectionMaterials(sectionName) {
-        let materialLinks = [];
-        let sectionId = dictionaryTopics[sectionName];
+        const sectionId = dictionaryTopics[sectionName];
+        const sectionElement = document.getElementById(sectionId);
+        const materialItems = sectionElement.querySelectorAll('li[class^="activity"]');
+        const materialLinks = [];
 
-        let sectionElement = document.getElementById(sectionId);
-        let materialListContainer = sectionElement.querySelector("ul");
-        let materialItems = materialListContainer.querySelectorAll('li[class^="activity"]');
+        for (const li of materialItems) {
+            const anchor = li.querySelector(".activityname > a");
+            if (anchor) materialLinks.push(anchor);
 
-        materialItems.forEach((materialLi) => {
-            const anchor = materialLi.querySelector(".activityname > a");
-            if (anchor) {
-                materialLinks.push(anchor);
-            }
-        });
-
-        for (const materialLi of materialItems) {
-            if (materialLi.querySelector('img[alt="Folder icon"]')) {
-                await parseFolderActivity(materialLi, sectionName);
+            if (li.querySelector('img[alt*="Folder"]')) {
+                await parseFolderActivity(li, sectionName);
             }
         }
 
         return materialLinks;
     }
 
+    async function createZipBlobs(filesToZip, sectionName) {
+        const folder = zip.folder(sectionName);
+        filesToZip.forEach((file) => {
+            if (file.type === "application/pdf") {
+                const cleanName = file.name.replace(/\s+\S{2,}$/g, "") + ".pdf";
+                folder.file(cleanName, file);
+            } else {
+                folder.file(file.name, file);
+            }
+        });
+    }
+
     async function finalDownload() {
         const zipBlob = await zip.generateAsync({ type: "blob" });
-
         const downloadLink = document.createElement("a");
         downloadLink.href = URL.createObjectURL(zipBlob);
         downloadLink.download = getCourseName() + ".zip";
@@ -133,20 +193,19 @@
     }
 
     async function downloadSectionPdfs() {
-        if (userSelectedTopics.length == 0) {
+        if (userSelectedTopics.length === 0) {
             alert("⚠️ Nessuna sezione selezionata. Seleziona almeno una sezione.");
             return;
         }
 
         for (const sectionName of userSelectedTopics) {
-            // Reset collected files for the new section
             collectedFiles = [];
+            const materialLinks = await listSectionMaterials(sectionName);
 
-            let materialLinks = await listSectionMaterials(sectionName);
-            for (const materialLink of materialLinks) {
-                const blob = await getBlobFromA(materialLink);
+            for (const link of materialLinks) {
+                const blob = await getBlobFromA(link);
                 if (blob.type === "text/html") {
-                    await parseHtmlResource(blob, materialLink);
+                    await parseHtmlResource(blob, link);
                 }
             }
 
@@ -156,24 +215,6 @@
         await finalDownload();
     }
 
-    async function createZipBlobs(filesToZip, sectionName) {
-        filesToZip.forEach((pdfFile) => {
-            if (pdfFile.type === "application/pdf") {
-                const nameParts = pdfFile.name.split(" ");
-                const nameWithoutLastTwoParts = nameParts.slice(0, nameParts.length - 2);
-                let baseFileName = "";
-                for (let i = 0; i < nameWithoutLastTwoParts.length; i++) {
-                    baseFileName += nameParts[i];
-                    if (!(i === nameWithoutLastTwoParts.length - 1)) {
-                        baseFileName += " ";
-                    }
-                }
-                const fileName = baseFileName + ".pdf";
-                zip.folder(sectionName).file(fileName, pdfFile);
-            }
-        });
-    }
-
     function getTopics() {
         const topicsContainer = document.querySelector(".topics");
         if (!topicsContainer) return [];
@@ -181,20 +222,21 @@
         allSectionElements = topicsContainer.querySelectorAll('[id*="section-"]');
         const sectionTitles = [];
 
-        for (let i = 0; i < allSectionElements.length; i++) {
-            const h3 = allSectionElements[i].querySelector("h3");
+        allSectionElements.forEach((section) => {
+            const h3 = section.querySelector("h3");
             if (h3) {
                 const text = h3.innerText.trim();
-                if (text !== "") {
+                if (text) {
                     sectionTitles.push(text);
-                    dictionaryTopics[text] = allSectionElements[i].id;
+                    dictionaryTopics[text] = section.id;
                 }
             }
-        }
+        });
 
         return sectionTitles;
     }
 
+    // --- Export functions to window ---
     window.getCourseName = getCourseName;
     window.getTopics = getTopics;
     window.downloadPDF = downloadSectionPdfs;
