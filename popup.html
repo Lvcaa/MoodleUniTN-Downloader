@@ -3,6 +3,8 @@
     <head>
         <title>Element Downloader</title>
         <link rel="stylesheet" href="style.css" />
+        <meta charset="UTF-8" />
+
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
         <script src="popup.js" defer></script>
         <script src="lib/jszip.min.js"></script>
@@ -16,8 +18,16 @@
             <h3>Stai visualizzando il corso:</h3>
             <h2 id="course">----------</h2>
 
+            <div class="containerCheck">
+                <input type="checkbox" id="selectAllSections" />
+                <label for="selectAllSections">Seleziona tutte le sezioni</label>
+            </div>
+
             <h3>Sezioni disponibili per il download:</h3>
             <div id="topicsList"></div>
         </div>
+
+        <a href="#">Domande &amp; Supporto</a>
+        <p id="loading"></p>
     </body>
 </html>
