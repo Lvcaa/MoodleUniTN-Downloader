@@ -45,11 +45,20 @@ Otherwise, you can specify the exact directory where you want to save your folde
 
 ---
 
+### ⚠️ General Information
+
+> At the moment, **only PDF file downloads are supported**.  
+> Other file types will be added in future updates.
+
+---
+
 ## 📝 Changelog
 
 ### [1.0] - 2025-09-29
 - Implementation of **PDF material download**.  
-- ⚠️ *At the moment, only PDF downloads are supported. Other file types will be added in future updates.*
+
+### [1.1] - 2025-10-18
+- Added functionality that enables **parsing of subfolders** contained in a section of a course.
 
 ---
 
@@ -121,12 +130,20 @@ Altrimenti potrai specificare la directory esatta nella quale salvare la tua car
 
 ---
 
+### ⚠️ Informazioni Generali
+
+> Al momento è supportato **solo il download dei file PDF**.  
+> Altri tipi di file verranno aggiunti nei futuri aggiornamenti.
+
+---
+
 ## 📝 Changelog delle modifiche
 
 ### [1.0] - 2025-09-29
-
 - Implementazione del **download dei materiali PDF**.  
-- ⚠️ *Al momento è supportato solo il download dei file PDF. Altri tipi di file verranno aggiunti nei futuri aggiornamenti.*
+
+### [1.1] - 2025-10-18
+- Aggiunta funzionalità che consente il **parsing delle sottocartelle** contenute in una sezione del corso.
 
 ---
 
