@@ -58,7 +58,8 @@ Otherwise, you can specify the exact directory where you want to save your folde
 - Implementation of **PDF material download**.  
 
 ### [1.1] - 2025-10-18
-- Added functionality that enables **parsing of subfolders** contained in a section of a course.
+- Added functionality that enables **parsing of subfolders** contained in a section of a course.  
+- Added **progress bar** in the popup to track download status.
 
 ---
 
@@ -143,7 +144,8 @@ Altrimenti potrai specificare la directory esatta nella quale salvare la tua car
 - Implementazione del **download dei materiali PDF**.  
 
 ### [1.1] - 2025-10-18
-- Aggiunta funzionalità che consente il **parsing delle sottocartelle** contenute in una sezione del corso.
+- Aggiunta funzionalità che consente il **parsing delle sottocartelle** contenute in una sezione del corso.  
+- Aggiunta **barra di progresso** nel popup per mostrare lo stato del download.
 
 ---
 
