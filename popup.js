@@ -115,4 +115,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             divButtons.appendChild(buttonDownloadAll);
         }
     );
+
+    //Checkbox to select all sections
+    const selectAllCheckbox = document.getElementById("selectAllSections");
+    selectAllCheckbox.addEventListener("change", async (event) => {
+        const isChecked = event.target.checked;
+        if (isChecked) {
+            //Get all buttons
+            const divButtons = document.querySelectorAll("button:not(#button-download)");
+            divButtons.forEach((button) => {
+                if (!button.classList.contains("button-active")) {
+                    // button.classList.add("button-active");
+                    button.click();
+                }
+            });
+        } else {
+            const divButtons = document.querySelectorAll("button:not(#button-download)");
+            divButtons.forEach((button) => {
+                if (button.classList.contains("button-active")) {
+                    // button.classList.remove("button-active");
+                    button.click();
+                }
+            });
+        }
+    });
 });
