@@ -1,40 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
     <head>
-        <title>Element Downloader</title>
         <meta charset="UTF-8" />
+        <title>UniTN Moodle Downloader</title>
+
         <link rel="stylesheet" href="style.css" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
         <script src="popup.js" defer></script>
         <script src="lib/jszip.min.js"></script>
     </head>
+
     <body>
-        <div id="header">
+        <!-- HEADER -->
+        <header id="header">
             <img id="logounitn" src="https://upload.wikimedia.org/wikipedia/it/thumb/e/e4/Sigillo_Universit%C3%A0_di_Trento.svg/768px-Sigillo_Universit%C3%A0_di_Trento.svg.png" alt="Unitn logo" />
             <h1>Benvenuto in UniTN Moodle Downloader!</h1>
-        </div>
+        </header>
 
-        <div id="containerInfo">
-            <h3>Stai visualizzando il corso:</h3>
-            <h2 id="course">----------</h2>
+        <!-- MAIN CONTENT -->
+        <main id="containerInfo">
+            <!-- Course name -->
+            <section class="course-info">
+                <h3>Stai visualizzando il corso:</h3>
+                <h2 id="course">----------</h2>
+            </section>
 
-            <div class="containerCheck">
-                <input type="checkbox" id="selectAllSections" />
-                <label for="selectAllSections">Seleziona tutte le sezioni</label>
-            </div>
-
-            <h3>Sezioni disponibili per il download:</h3>
-            <div id="topicsList"></div>
-
-            <!-- Progress bar area -->
-            <div id="loading">
-                <span id="loading-text">⏳ In attesa di iniziare...</span>
-                <div class="progress-bar">
-                    <div class="progress-bar-fill" id="progress-fill"></div>
+            <!-- Select all -->
+            <section class="select-section">
+                <div class="containerCheck">
+                    <input type="checkbox" id="selectAllSections" />
+                    <label for="selectAllSections">Seleziona tutte le sezioni</label>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <a href="#">Domande &amp; Supporto</a>
+            <!-- Topics list -->
+            <section class="topics-section">
+                <h3>Sezioni disponibili per il download:</h3>
+                <div id="topicsList"></div>
+            </section>
+
+            <!-- Progress bar -->
+            <section class="progress-section">
+                <div id="loading">
+                    <span id="loading-text">⏳ In attesa di iniziare...</span>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- DISCLAIMER -->
+        <section class="containerQuote">
+            <div class="verticalLine"></div>
+            <h3>🛡️ Disclaimer: nessun dato personale, cookie o permesso di accesso viene raccolto o condiviso con terze parti. Tutte le operazioni avvengono esclusivamente sul tuo browser, in modo sicuro e locale.</h3>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <a href="#">Domande &amp; Supporto</a>
+        </footer>
     </body>
 </html>
