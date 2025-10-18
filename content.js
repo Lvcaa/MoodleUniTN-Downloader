@@ -85,7 +85,7 @@
                 const nestedBlob = await getBlobFromA(resourceAnchor);
                 const fileName = sourceElement.textContent.trim() || "document";
                 const extension = iconType === "word" ? ".docx" : iconType === "ppt" ? ".pptx" : iconType === "excel" ? ".xlsx" : ".bin";
-
+                console.info("🗂️ Detected file type:", nestedBlob);
                 const file = new File([nestedBlob], fileName + extension, { type: nestedBlob.type });
                 collectedFiles.push(file);
                 console.info("📁 Added file:", file.name);
