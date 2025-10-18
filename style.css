@@ -1,23 +1,42 @@
 html * {
     font-family: "Inter", sans-serif;
 }
+
 body {
-    width: 400px;
-    padding: 10px;
-    background: #f4f4f4;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 420px;
+    padding: 0;
+    margin: 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+}
+
+/* Main container */
+.container {
+    padding: 20px;
 }
 
 h1 {
-    font-size: 16px;
+    font-size: 18px;
     margin: 0 0 10px;
-    color: #333;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+h2 {
+    margin: 10px 0;
+}
+
+h3 {
+    font-size: 14px;
+    color: #4a5568;
+    margin: 15px 0 10px 0;
+    font-weight: 600;
 }
 
 #logounitn {
     width: 70px;
     height: 70px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 #header {
@@ -25,85 +44,269 @@ h1 {
     flex-direction: row;
     gap: 20px;
     align-items: center;
-    margin-bottom: 30px;
+    padding: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e6ed;
+    background: #ffffff;
 }
 
 #course {
-    color: #222;
+    color: #1a252f;
     margin: 10px 0;
-    font-weight: bolder !important ;
-    font-size: 24px;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.3;
 }
 
 #containerInfo {
-    margin-left: 15px;
+    padding: 20px 25px;
 }
 
+/* Sections download area */
 #sectionsDownload {
-    max-height: 200px;
-    width: 90%; /* wider so the text fits */
+    max-height: 220px;
+    width: 100%;
     overflow-y: auto;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 6px;
+    background: #ffffff;
+    border: 2px solid #e0e6ed;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+#sectionsDownload::-webkit-scrollbar {
+    width: 8px;
+}
+
+#sectionsDownload::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 4px;
+}
+
+#sectionsDownload::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+#sectionsDownload::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
 }
 
 #sectionsDownload ul {
     margin: 0;
-    padding-left: 18px;
+    padding-left: 20px;
+}
+
+#sectionsDownload li {
+    margin: 8px 0;
+    color: #4a5568;
 }
 
 #topicsList {
     display: flex;
     flex-direction: column;
-    align-items: baseline;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 0 5px;
 }
 
-/* --- Base button style --- */
+/* Base button style */
 #topicsList button {
     border: none;
-    padding: 20px;
-    font-size: 16px;
+    padding: 16px 24px;
+    font-size: 15px;
     font-weight: 600;
     width: 100%;
-    border-radius: 15px;
-    margin-bottom: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    background: #f9f9f9; /* light grey background */
-    color: #333; /* dark text */
-    border: 1px solid #ddd; /* soft border */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease-in-out;
+    background: #ffffff;
+    color: #2d3748;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    text-align: left;
 }
 
-/* --- Hover state --- */
+/* Hover state */
 #topicsList button:hover {
-    background: #f1f1f1;
-    box-shadow: 0 0px 10px #0996d7, 0 2px 5px rgba(0, 0, 0, 0.15);
+    background: #f7fafc;
+    border-color: #0996d7;
+    box-shadow: 0 4px 12px rgba(9, 150, 215, 0.15);
+    transform: translateY(-1px);
 }
 
-/* --- Pressed state (mouse down) --- */
+/* Pressed state */
 #topicsList button:active {
-    background-color: #0996d7;
+    background-color: #0780bd;
     color: #fff;
+    border-color: #0780bd;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(0);
 }
 
-/* --- Active state (toggled via JS) --- */
+/* Active state */
 #topicsList button.button-active {
-    background-color: #0996d7;
+    background: linear-gradient(135deg, #0996d7 0%, #0780bd 100%);
     color: #fff;
-    box-shadow: 0 0px 10px #0996d7, 0 2px 5px rgba(0, 0, 0, 0.15);
+    border-color: #0996d7;
+    box-shadow: 0 4px 12px rgba(9, 150, 215, 0.3);
 }
 
-/* --- Optional inactive override --- */
 #topicsList button.button-not-active {
     background-color: #fff;
-    color: #333;
+    color: #2d3748;
+    border-color: #e2e8f0;
 }
 
+/* Download button */
 #button-download {
-    background-color: rgb(23, 172, 23) !important ;
-    color: white !important ;
+    background: linear-gradient(135deg, #17ac17 0%, #159515 100%) !important;
+    color: white !important;
+    border: none !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    padding: 16px 24px !important;
+    margin-bottom: 15px;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(23, 172, 23, 0.3) !important;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+#button-download:hover {
+    background: linear-gradient(135deg, #159515 0%, #128012 100%) !important;
+    box-shadow: 0 6px 16px rgba(23, 172, 23, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+#button-download:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(23, 172, 23, 0.3) !important;
+}
+
+/* Select all checkbox */
+#selectAllSections {
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #0996d7;
+}
+
+.containerCheck {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 14px 16px;
+    background: #f7fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    font-size: 15px;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.containerCheck:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.containerCheck label {
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+}
+
+/* Privacy notice */
+.privacy-notice {
+    background: #edf2f7;
+    border: 1px solid #cbd5e0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 20px 25px 15px 25px;
+    font-size: 12px;
+    color: #4a5568;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.privacy-notice::before {
+    content: "🔒";
+    font-size: 18px;
+    flex-shrink: 0;
+    line-height: 1.5;
+}
+
+.privacy-notice p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Footer section */
+.footer {
+    background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+    padding: 16px 25px;
+    text-align: center;
+}
+
+.footer a,
+body > a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.footer a:hover,
+body > a:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.footer a::before,
+body > a::before {
+    content: "💬";
+    font-size: 16px;
+}
+
+/* Direct link styling for body > a (fallback) */
+body > a {
+    display: block;
+    background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+    padding: 16px 25px;
+    text-align: center;
+}
+
+/* Responsive adjustments
+@media (max-width: 440px) {
+    body {
+        width: 100%;
+    }
+
+    #course {
+        font-size: 20px;
+    }
+
+    #containerInfo {
+        padding: 20px 15px;
+    }
+
+    .privacy-notice {
+        margin: 20px 15px 15px 15px;
+    }
+
+    .footer,
+    body > a {
+        padding: 16px 15px;
+    }
+} */
