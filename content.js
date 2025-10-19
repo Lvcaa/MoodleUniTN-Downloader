@@ -1,17 +1,21 @@
 /*
- * Content Script for Moodle Downloader (Debug Version)
- * ----------------------------------------------------
- * Adds detailed console logging for each step.
+ * Content Script for Moodle Downloader (Debug Version - Final)
+ * ------------------------------------------------------------
+ * Downloads Moodle course sections with detailed console logging.
  */
 
 (() => {
-    var dictionaryTopics = {};
+    // === GLOBALS ===
+    var dictionaryTopics = {}; // section name → section element id
+    const zip = new JSZip();
+    let userSelectedTopics = [];
+    let allSectionElements = [];
+    let collectedFiles = [];
 
-    // --- Helpers ---
+    // === HELPERS ===
     function getCourseName() {
         const header = document.querySelector(".page-header-headings");
         if (!header) return "⚠️ Course name not found";
-
         const h2 = header.querySelector(".h2");
         const courseName = h2 ? h2.innerText.trim() : header.innerText.trim();
         console.info("📘 Course name detected:", courseName);
@@ -29,7 +33,6 @@
     function getIconType(sourceElement) {
         const iconImg = sourceElement.closest("li")?.querySelector("img.activityicon");
         if (!iconImg) return "unknown";
-
         const alt = iconImg.alt?.toLowerCase() || "";
         if (alt.includes("file")) return "file";
         if (alt.includes("folder")) return "folder";
@@ -40,22 +43,18 @@
         return "unknown";
     }
 
-    // --- Global state ---
-    const zip = new JSZip();
-    let userSelectedTopics = [];
-    let allSectionElements = [];
-    let collectedFiles = [];
-
-    // --- Core logic ---
+    // === CORE LOGIC ===
     async function parseHtmlResource(blobContent, sourceElement) {
         console.groupCollapsed("🧩 parseHtmlResource →", sourceElement.href);
         const htmlString = await blobContent.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, "text/html");
+
+        // Look for typical file links inside Moodle resource pages
         const resourceAnchor = doc.querySelector(".resourceworkaround > a") || doc.querySelector('a[href*="pluginfile.php"]') || doc.querySelector("a");
 
         if (!resourceAnchor) {
-            console.warn("⚠️ No downloadable anchor found in resource page:", sourceElement.href);
+            console.warn("⚠️ No downloadable anchor found:", sourceElement.href);
             console.groupEnd();
             return;
         }
@@ -80,11 +79,10 @@
                 break;
             }
 
-            case "folder": {
+            case "folder":
                 console.log("   📁 Detected folder, parsing...");
                 await parseFolderActivity(sourceElement.closest("li"), getSectionNameFromElement(sourceElement));
                 break;
-            }
 
             default:
                 console.warn("⚠️ Unhandled icon type:", iconType);
@@ -124,11 +122,6 @@
         console.groupEnd();
     }
 
-    async function addListTopics(sectionName) {
-        userSelectedTopics.push(sectionName);
-        console.log("✅ Added to selected topics:", sectionName);
-    }
-
     async function parseFolderActivity(folderLi, sectionName) {
         console.groupCollapsed("📁 parseFolderActivity →", sectionName);
         const folderLink = folderLi.querySelector(".activityname a");
@@ -137,6 +130,7 @@
             console.groupEnd();
             return;
         }
+
         console.log("   Fetching folder page:", folderLink.href);
         const res = await fetch(folderLink.href, { credentials: "include" });
         if (!res.ok) {
@@ -144,6 +138,7 @@
             console.groupEnd();
             return;
         }
+
         const htmlFolder = await res.text();
         await parseHtmlResourceFolder(htmlFolder, sectionName);
         console.groupEnd();
@@ -190,6 +185,7 @@
         console.log("💾 Download triggered!");
     }
 
+    // === MAIN WORKFLOW ===
     async function downloadSectionPdfs() {
         console.log("🚀 Starting section download...");
         if (userSelectedTopics.length === 0) {
@@ -197,59 +193,87 @@
             return;
         }
 
-        const total = userSelectedTopics.length;
+        const totalSections = userSelectedTopics.length;
 
-        for (let i = 0; i < total; i++) {
+        for (let i = 0; i < totalSections; i++) {
             const sectionName = userSelectedTopics[i];
-            console.group(`🎯 SECTION ${i + 1}/${total}: ${sectionName}`);
+            console.group(`🎯 SECTION ${i + 1}/${totalSections}: ${sectionName}`);
             collectedFiles = [];
 
-            chrome.runtime.sendMessage({
-                type: "DOWNLOAD_PROGRESS",
-                section: sectionName,
-                percent: Math.round((i / total) * 100),
-            });
+            // progress by section
+            try {
+                chrome.runtime.sendMessage({
+                    type: "DOWNLOAD_PROGRESS",
+                    section: sectionName,
+                    percent: Math.round((i / totalSections) * 100),
+                });
+            } catch (err) {
+                console.warn("⚠️ Popup closed during progress update:", err);
+            }
 
             const materialLinks = await listSectionMaterials(sectionName);
 
-            for (const link of materialLinks) {
-                console.log("🔗 Checking link:", link.href);
+            // per-file progress counter
+            for (let j = 0; j < materialLinks.length; j++) {
+                const link = materialLinks[j];
+                const fileName = link.textContent.trim() || "document";
+
+                try {
+                    chrome.runtime.sendMessage({
+                        type: "FILE_DOWNLOAD",
+                        fileName: fileName,
+                        progress: j + 1,
+                        total: materialLinks.length,
+                    });
+                } catch (err) {
+                    console.warn("⚠️ Popup closed during file update:", err);
+                }
+
+                console.log(`🔗 (${j + 1}/${materialLinks.length}) Checking link:`, link.href);
                 const blob = await getBlobFromA(link);
+
                 if (blob.type === "text/html") {
                     console.log("📄 HTML wrapper detected — parsing inner resource...");
                     await parseHtmlResource(blob, link);
                 } else {
-                    // Direct file
-                    const fileName = (link.textContent.trim() || "document") + "." + blob.type.split("/").pop();
-                    collectedFiles.push(new File([blob], fileName, { type: blob.type }));
-                    console.log("📎 Direct file added:", fileName);
+                    const cleanName = fileName + "." + blob.type.split("/").pop();
+                    collectedFiles.push(new File([blob], cleanName, { type: blob.type }));
+                    console.log("📎 Direct file added:", cleanName);
                 }
             }
 
-            console.log("✅ Collected", collectedFiles.length, "files for section:", sectionName);
+            console.log("✅ Collected", collectedFiles.length, "files for:", sectionName);
             await createZipBlobs(collectedFiles, sectionName);
             console.groupEnd();
         }
 
-        chrome.runtime.sendMessage({
-            type: "DOWNLOAD_PROGRESS",
-            section: "Completato",
-            percent: 100,
-        });
+        // Final progress update
+        try {
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD_PROGRESS",
+                section: "Completato",
+                percent: 100,
+            });
+        } catch (err) {
+            console.warn("⚠️ Popup closed during final message:", err);
+        }
 
         console.log("🎉 All sections processed, building ZIP...");
         await finalDownload();
         console.log("🏁 Download complete!");
     }
 
+    // === TOPIC DETECTION ===
     function getTopics() {
         const topicsContainer = document.querySelector(".topics");
         if (!topicsContainer) {
             console.warn("⚠️ Topics container not found");
             return [];
         }
+
         allSectionElements = topicsContainer.querySelectorAll('[id*="section-"]');
         const sectionTitles = [];
+
         allSectionElements.forEach((section) => {
             const h3 = section.querySelector("h3");
             if (h3) {
@@ -260,13 +284,17 @@
                 }
             }
         });
+
         console.info("📚 Sections detected:", sectionTitles);
         return sectionTitles;
     }
 
-    // --- Export ---
+    // === EXPORTS ===
     window.getCourseName = getCourseName;
     window.getTopics = getTopics;
     window.downloadPDF = downloadSectionPdfs;
-    window.addListTopics = addListTopics;
+    window.addListTopics = (sectionName) => {
+        userSelectedTopics.push(sectionName);
+        console.log("✅ Added to selected topics:", sectionName);
+    };
 })();
