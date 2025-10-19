@@ -68,8 +68,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             updateProgressBar(msg.section, msg.percent);
         }
     });
+    // --- Listen for progress updates ---
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.type === "FILE_DOWNLOAD") {
+            updateFileProgress(msg.fileName, msg.progress, msg.total);
+        }
+    });
 });
-
+function updateFileProgress(fileName, progress, total) {
+    const text = document.getElementById("specific-file");
+    if (text) {
+        text.textContent = `📄 Scaricando: ${fileName} (${progress}/${total})`;
+    }
+}
 function updateProgressBar(sectionName, percent) {
     const text = document.getElementById("loading-text");
     const fill = document.getElementById("progress-fill");
