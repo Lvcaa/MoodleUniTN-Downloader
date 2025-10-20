@@ -23,45 +23,81 @@
     }
 
     async function getBlobFromA(anchor) {
-        console.log("⬇️ Fetching:", anchor.href);
-        const res = await fetch(anchor.href, { credentials: "include" });
-        const blob = await res.blob();
-        console.log("   ↳ Fetched:", anchor.href, "| Type:", blob.type, "| Size:", blob.size, "bytes");
-        return blob;
+        try {
+            console.log("⬇️ Fetching:", anchor.href);
+            const res = await fetch(anchor.href, { credentials: "include" });
+            const blob = await res.blob();
+            console.log("   ↳ Fetched:", anchor.href, "| Type:", blob.type, "| Size:", blob.size, "bytes");
+            return blob;
+        } catch (error) {
+            console.error("   ⚠️ Error fetching blob:", error);
+            return;
+        }
     }
 
     function getIconType(sourceElement) {
-        const iconImg = sourceElement.closest("li")?.querySelector("img.activityicon");
-        if (!iconImg) return "unknown";
+        const iconImg = sourceElement.closest("li")?.querySelector('img[class*="activityicon"]');
+        if (!iconImg) {
+            console.warn("⚠️ No activity icon found near:", sourceElement.outerHTML);
+            return "unknown";
+        }
         const alt = iconImg.alt?.toLowerCase() || "";
+
+        console.log("ALT TEXT IS: ", alt);
+        console.log("   🔍 Icon alt text:", alt);
+
         if (alt.includes("file")) return "file";
         if (alt.includes("folder")) return "folder";
         if (alt.includes("word")) return "word";
         if (alt.includes("powerpoint")) return "ppt";
         if (alt.includes("excel")) return "excel";
         if (alt.includes("page")) return "page";
+        if (alt.includes("video")) return "video";
+        if (alt.includes("forum")) return "forum";
         return "unknown";
+    }
+
+    async function parseVideoResource(resourceAnchor) {
+        console.log(" I WAS CALLED -----------------------");
+
+        //Parse it again to get the real video link
+        const nestedBlob = await fetch(resourceAnchor, { credentials: "include" }).then((res) => res.blob());
+
+        const htmlString = await nestedBlob.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, "text/html");
+
+        console.log("DOCUMENT OF NESTED VIDEO: ", doc.body.innerHTML + "...");
+
+        const realVideoElement = doc.querySelector("video") || doc.querySelector("iframe");
+        console.log("REAL VIDEO ELEMENT IS ", realVideoElement);
+        if (!realVideoElement) {
+            console.warn("⚠️ No video element found in nested HTML");
+            return;
+        }
+        const videoSrc = realVideoElement.getAttribute("src");
+        const response = await fetch(videoSrc, { credentials: "include", method: "GET" });
+        if (!response.ok) {
+            console.warn("⚠️ Video fetch failed:", response.status);
+            return;
+        }
+        const videoBlob = await response.blob();
+        console.log("   🎥 Fetched video blob:", videoBlob);
+        collectedFiles.push(new File([videoBlob], "video_resource.mp4", { type: videoBlob.type }));
     }
 
     // === CORE LOGIC ===
     async function parseHtmlResource(blobContent, sourceElement) {
-        console.groupCollapsed("🧩 parseHtmlResource →", sourceElement.href);
+        console.log("CURRENT BLOB IS: ", blobContent);
+        console.group("🧩 parseHtmlResource →", sourceElement.href);
+
+        //Parse the HTML content of the wrapper containing real element
         const htmlString = await blobContent.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, "text/html");
 
-        // Look for typical file links inside Moodle resource pages
-        const resourceAnchor = doc.querySelector(".resourceworkaround > a") || doc.querySelector('a[href*="pluginfile.php"]') || doc.querySelector("a");
-
-        if (!resourceAnchor) {
-            console.warn("⚠️ No downloadable anchor found:", sourceElement.href);
-            console.groupEnd();
-            return;
-        }
-
-        console.log("   ✅ Found nested anchor:", resourceAnchor.href);
         const iconType = getIconType(sourceElement);
-        console.log("   🔎 Detected icon type:", iconType);
+        console.log("   Detected icon type:", iconType);
 
         switch (iconType) {
             case "pdf":
@@ -69,10 +105,40 @@
             case "ppt":
             case "excel":
             case "page":
+            case "forum":
+                console.log("FOUND A FORUM... IGNORING");
             case "file": {
+                // Handle all document types
+                console.log("   📄 Detected document type, extracting...");
+                const resourceAnchor = doc.querySelector(".resourceworkaround > a") || doc.querySelector('a[href*="pluginfile.php"]');
+
+                console.log("RESOURCE ANCHOR IS: ", resourceAnchor);
+                if (!resourceAnchor) {
+                    console.warn("⚠️ No resource anchor found for document");
+                    break;
+                }
+
                 const nestedBlob = await getBlobFromA(resourceAnchor);
-                const fileName = sourceElement.textContent.trim() || "document";
-                const extension = iconType === "word" ? ".docx" : iconType === "ppt" ? ".pptx" : iconType === "excel" ? ".xlsx" : iconType === "page" ? ".pdf" : ".bin";
+                let fileName = sourceElement.textContent.trim() || "document";
+                fileName = fileName.replace("File", "").trim();
+
+                // Determine extension based on icon type
+                let extension = ".bin";
+                if (iconType === "word") extension = ".docx";
+                else if (iconType === "ppt") extension = ".pptx";
+                else if (iconType === "excel") extension = ".xlsx";
+                else if (iconType === "pdf") extension = ".pdf";
+                else if (iconType === "page") extension = ".pdf";
+                else if (iconType === "file") {
+                    // Try to detect from blob type
+                    const blobType = nestedBlob.type;
+                    if (blobType.includes("pdf")) extension = ".pdf";
+                    else if (blobType.includes("word") || blobType.includes("document")) extension = ".docx";
+                    else if (blobType.includes("presentation")) extension = ".pptx";
+                    else if (blobType.includes("sheet")) extension = ".xlsx";
+                    else extension = "." + blobType.split("/").pop();
+                }
+
                 const file = new File([nestedBlob], fileName + extension, { type: nestedBlob.type });
                 collectedFiles.push(file);
                 console.log("   📄 Added file:", file.name, "(", file.size, "bytes )");
@@ -84,8 +150,33 @@
                 await parseFolderActivity(sourceElement.closest("li"), getSectionNameFromElement(sourceElement));
                 break;
 
+            case "video":
+                console.log("   🎥 Detected video resource, parsing...");
+                console.log(doc.body.innerHTML.substring(0, 1500) + "...");
+                const videoElement = doc.querySelector("#contentframe") || doc.querySelector(".videoDisplay video");
+                console.log("VIDEO ELEMENT IS ", videoElement);
+
+                if (!videoElement) {
+                    console.warn("⚠️ No video element found in HTML");
+                    break;
+                }
+
+                const resourceAnchor = videoElement.getAttribute("src");
+                console.log("RESOURCE ANCHOR IS: ", resourceAnchor);
+
+                if (!resourceAnchor) {
+                    console.warn("⚠️ Video src attribute is empty");
+                    break;
+                }
+
+                console.log("FETCHING NESTED VIDEO RESOURCE...", resourceAnchor);
+
+                await parseVideoResource(resourceAnchor);
+                break;
+
             default:
                 console.warn("⚠️ Unhandled icon type:", iconType);
+                console.log("   Dumping HTML for inspection:");
         }
         console.groupEnd();
     }
@@ -97,7 +188,7 @@
     }
 
     async function parseHtmlResourceFolder(htmlString, sectionName) {
-        console.groupCollapsed("📂 parseHtmlResourceFolder →", sectionName);
+        console.group("📂 parseHtmlResourceFolder →", sectionName);
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, "text/html");
         const tree = doc.querySelector('[class*="foldertree"]');
@@ -123,8 +214,9 @@
     }
 
     async function parseFolderActivity(folderLi, sectionName) {
-        console.groupCollapsed("📁 parseFolderActivity →", sectionName);
+        console.group("📁 parseFolderActivity →", sectionName);
         const folderLink = folderLi.querySelector(".activityname a");
+        console.log("FOLDER LINK IS: ", folderLink);
         if (!folderLink) {
             console.warn("⚠️ Folder link missing in section:", sectionName);
             console.groupEnd();
@@ -163,7 +255,7 @@
     }
 
     async function createZipBlobs(filesToZip, sectionName) {
-        console.groupCollapsed("📚 createZipBlobs →", sectionName);
+        console.group("📚 createZipBlobs →", sectionName);
         const folder = zip.folder(sectionName);
         filesToZip.forEach((file) => {
             folder.file(file.name, file);
