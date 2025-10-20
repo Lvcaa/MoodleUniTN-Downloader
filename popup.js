@@ -86,7 +86,7 @@ function updateProgressBar(sectionName, percent) {
     const fill = document.getElementById("progress-fill");
 
     if (text && fill) {
-        text.textContent = `📦 Scarico: ${sectionName} (${percent}%)`;
+        text.textContent = `📦 Processando sezione: ${sectionName} (${percent}%)`;
         fill.style.width = `${percent}%`;
 
         if (percent >= 100) {
