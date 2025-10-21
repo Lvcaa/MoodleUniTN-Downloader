@@ -41,19 +41,20 @@
             console.warn("⚠️ No activity icon found near:", sourceElement.outerHTML);
             return "unknown";
         }
-        const alt = iconImg.alt?.toLowerCase() || "";
+        const src = iconImg.src?.toLowerCase() || "";
 
-        console.log("ALT TEXT IS: ", alt);
-        console.log("   🔍 Icon alt text:", alt);
+        console.log("SRC IS: ", src);
+        console.log("   🔍 Icon src:", src);
 
-        if (alt.includes("file")) return "file";
-        if (alt.includes("folder")) return "folder";
-        if (alt.includes("word")) return "word";
-        if (alt.includes("powerpoint")) return "ppt";
-        if (alt.includes("excel")) return "excel";
-        if (alt.includes("page")) return "page";
-        if (alt.includes("video")) return "video";
-        if (alt.includes("forum")) return "forum";
+        if (src.includes("pdf")) return "pdf";
+        if (src.includes("folder")) return "folder";
+        //TODO: Check that if it is a document treate it as a general file and give it proper extension rather than different logic
+        if (src.includes("document")) return "document";
+        if (src.includes("powerpoint")) return "ppt";
+        if (src.includes("excel")) return "excel";
+        if (src.includes("page")) return "page";
+        if (src.includes("video")) return "video";
+        if (src.includes("forum")) return "forum";
         return "unknown";
     }
 
@@ -100,14 +101,13 @@
         console.log("   Detected icon type:", iconType);
 
         switch (iconType) {
-            case "pdf":
             case "word":
             case "ppt":
             case "excel":
             case "page":
             case "forum":
                 console.log("FOUND A FORUM... IGNORING");
-            case "file": {
+            case "pdf": {
                 // Handle all document types
                 console.log("   📄 Detected document type, extracting...");
                 const resourceAnchor = doc.querySelector(".resourceworkaround > a") || doc.querySelector('a[href*="pluginfile.php"]');
@@ -124,7 +124,7 @@
 
                 // Determine extension based on icon type
                 let extension = ".bin";
-                if (iconType === "word") extension = ".docx";
+                if (iconType === "document") extension = ".docx";
                 else if (iconType === "ppt") extension = ".pptx";
                 else if (iconType === "excel") extension = ".xlsx";
                 else if (iconType === "pdf") extension = ".pdf";
@@ -257,6 +257,7 @@
     async function createZipBlobs(filesToZip, sectionName) {
         console.group("📚 createZipBlobs →", sectionName);
         const folder = zip.folder(sectionName);
+        console.log("List of files to zip is: ", filesToZip, "files...");
         filesToZip.forEach((file) => {
             folder.file(file.name, file);
             console.log("   ✅ Added to ZIP:", file.name);
@@ -351,6 +352,7 @@
         }
 
         console.log("🎉 All sections processed, building ZIP...");
+
         await finalDownload();
         console.log("🏁 Download complete!");
     }
