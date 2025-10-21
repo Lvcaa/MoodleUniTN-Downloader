@@ -18,12 +18,27 @@ Welcome! This extension was created to make it easier to **download content** fr
 
 ### ⚙️ Requirements
 
-- You must be logged in to: [https://webapps.unitn.it/gestionecorsi/](https://webapps.unitn.it/gestionecorsi/)
+- You must be logged in to: [https://webapps.unitn.it/gestionecorsi/](https://webapps.unitn.it/gestionecorsi/)  
 - A **regular UniTN account login** is sufficient — *you do not need SPID or two-factor authentication* for this extension to work.  
 
-> **Disclaimer:** *No personal data is collected or stored.*  
->  
-> *The only access permission required by Chrome is solely for enabling the extension to download files.*
+---
+
+### 🔒 Privacy & Security
+
+This extension operates **entirely within your active Moodle session** on [didatticaonline.unitn.it](https://didatticaonline.unitn.it).  
+It **does not** perform any fake identification, session emulation, or background authentication.  
+
+When fetching course materials, the extension simply issues standard `fetch` requests **from the same page context** where you are already logged in.  
+Your browser automatically includes your Moodle session cookies — exactly as visible in the browser’s **Developer Console** — and handles authentication internally.  
+
+The extension:
+- ✅ Does **not** access or export private cookies beyond what the page’s JavaScript can see.  
+- ✅ Does **not** read `HttpOnly` cookies or hidden authentication tokens.  
+- ✅ Does **not** transmit, store, or share any private data, credentials, or files with third parties.  
+- ✅ Uses only the permissions listed in the manifest: `"downloads"`, `"activeTab"`, and `"scripting"` — solely to download files from the Moodle platform.  
+- ✅ Operates with complete transparency: the full source code is available for public review on GitHub.  
+
+> **In short:** The extension behaves like a normal logged-in user browsing and downloading materials manually — no additional or hidden access is performed.
 
 ---
 
@@ -52,6 +67,19 @@ Otherwise, you can specify the exact directory where you want to save your folde
 
 ---
 
+## 🧭 Trust & Transparency
+
+This project follows a policy of **open transparency** so that every user can verify its safety.  
+- The **source code** is fully available on GitHub. You can inspect, rebuild, and install it manually.  
+- The extension **never contacts external servers** — all operations occur locally within your browser.  
+- You can verify in Chrome’s **Developer Tools → Network tab** that all requests are made only to the Moodle platform.  
+- The permissions are minimal and clearly explained.  
+- The developer identity and contact information are public and verifiable.
+
+> 💡 *If you ever have doubts, you can open the code, read it, and confirm that no personal data leaves your browser.*
+
+---
+
 ## 📝 Changelog
 
 ### [1.0] - 2025-09-29
@@ -65,8 +93,7 @@ Otherwise, you can specify the exact directory where you want to save your folde
 
 ## 📜 Terms of Use
 
-This tool is intended solely for students and staff of the University of Trento.
-
+This tool is intended solely for students and staff of the University of Trento.  
 Its use is allowed only for personal and academic purposes.
 
 It is strictly forbidden to share, publish, or redistribute teaching materials downloaded through this extension, as they are protected by copyright and subject to the university’s policies.
@@ -78,8 +105,7 @@ The author of this extension is not affiliated with the University of Trento and
 ## 📧 Contact
 
 For any questions, concerns, or clarifications:  
-*Extension owner:*
-
+*Extension owner:*  
 - Luca Galli — [luca.galli-1@studenti.unitn.it](mailto:luca.galli-1@studenti.unitn.it)
 
 ---
@@ -107,9 +133,24 @@ Benvenuto/a! Questa estensione è creata per facilitare il **download dei conten
 - Aver effettuato l'accesso alla pagina: [https://webapps.unitn.it/gestionecorsi/](https://webapps.unitn.it/gestionecorsi/)  
 - È sufficiente un **accesso con le proprie credenziali UniTN** — *non è necessario lo SPID né l’autenticazione a due fattori* per utilizzare questa estensione.  
 
-> **Disclaimer:** *Nessun dato personale viene trattato o conservato.*  
->  
-> *L’unico requisito di accesso è richiesto da Chrome esclusivamente per consentire all'estensione i permessi necessari al download dei file.*
+---
+
+### 🔒 Privacy & Sicurezza
+
+Questa estensione funziona **esclusivamente all’interno della sessione Moodle attiva** su [didatticaonline.unitn.it](https://didatticaonline.unitn.it).  
+Non esegue **identificazioni simulate**, **emulazioni di sessione**, né **autenticazioni in background**.  
+
+Durante il download dei materiali, l’estensione invia normali richieste `fetch` **dallo stesso contesto della pagina** in cui l’utente è già autenticato.  
+Il browser include automaticamente i cookie della sessione Moodle — gli stessi visibili nella **console sviluppatore** del browser — e gestisce internamente l’autenticazione.  
+
+L’estensione:
+- ✅ Non accede né esporta cookie privati oltre a quelli visibili dallo JavaScript della pagina.  
+- ✅ Non legge cookie `HttpOnly` o token di autenticazione nascosti.  
+- ✅ Non trasmette, archivia o condivide dati personali, credenziali o file con terze parti.  
+- ✅ Utilizza solo i permessi dichiarati nel manifest: `"downloads"`, `"activeTab"`, e `"scripting"`, necessari unicamente per il download dei file dalla piattaforma Moodle.  
+- ✅ Opera in totale trasparenza: il **codice sorgente** è pubblico e consultabile su GitHub.  
+
+> **In sintesi:** L’estensione si comporta come un normale utente loggato che scarica manualmente i materiali — senza accessi aggiuntivi o nascosti.
 
 ---
 
@@ -138,6 +179,19 @@ Altrimenti potrai specificare la directory esatta nella quale salvare la tua car
 
 ---
 
+## 🧭 Fiducia & Trasparenza
+
+Questo progetto segue una politica di **massima trasparenza** per garantire la piena fiducia degli utenti.  
+- Il **codice sorgente** è interamente disponibile su GitHub: chiunque può leggerlo, verificarlo e installarlo manualmente.  
+- L’estensione **non contatta server esterni**: tutte le operazioni avvengono localmente nel browser.  
+- È possibile verificare, nella sezione **Strumenti per sviluppatori → Rete**, che tutte le richieste sono dirette unicamente alla piattaforma Moodle.  
+- I permessi richiesti sono minimi e spiegati chiaramente.  
+- L’identità e i contatti dello sviluppatore sono pubblici e verificabili.  
+
+> 💡 *Se hai dubbi, puoi sempre controllare il codice e confermare che nessun dato personale lascia il tuo browser.*
+
+---
+
 ## 📝 Changelog delle modifiche
 
 ### [1.0] - 2025-09-29
@@ -151,8 +205,7 @@ Altrimenti potrai specificare la directory esatta nella quale salvare la tua car
 
 ## 📜 Condizioni d’uso
 
-Questo strumento è destinato esclusivamente agli studenti e al personale dell’Università di Trento.
-
+Questo strumento è destinato esclusivamente agli studenti e al personale dell’Università di Trento.  
 Il suo utilizzo è consentito solo per fini personali e accademici.
 
 È espressamente vietato condividere, pubblicare o ridistribuire il materiale didattico scaricato tramite questa estensione, in quanto protetto da diritti d’autore e soggetto alle politiche dell’Ateneo.
@@ -164,6 +217,5 @@ L’autore dell’estensione non è affiliato con l’Università di Trento e de
 ## 📧 Contatti
 
 Per qualsiasi domanda, dubbio o chiarimento:  
-*Proprietario dell'estensione:*
-
+*Proprietario dell'estensione:*  
 - Luca Galli — [luca.galli-1@studenti.unitn.it](mailto:luca.galli-1@studenti.unitn.it)
